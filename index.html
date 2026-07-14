@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>ChatApp - Videollamada integrada 📞</title>
+  <title>ChatApp - Llamadas de voz 🎙️</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
@@ -126,11 +126,7 @@
     .system-msg { text-align: center; font-size: 0.8rem; color: var(--text-light); margin: 0.8rem 0; }
     .typing-indicator { font-size: 0.8rem; color: var(--text-light); padding: 0.3rem 0.8rem; font-style: italic; min-height: 20px; }
 
-    .quoted-msg {
-      background: rgba(0,0,0,0.05); border-left: 4px solid var(--btn-primary);
-      padding: 0.3rem 0.5rem; border-radius: 8px; margin-bottom: 0.4rem;
-      font-size: 0.85rem; cursor: pointer;
-    }
+    .quoted-msg { background: rgba(0,0,0,0.05); border-left: 4px solid var(--btn-primary); padding: 0.3rem 0.5rem; border-radius: 8px; margin-bottom: 0.4rem; font-size: 0.85rem; cursor: pointer; }
     .mention { color: var(--mention); font-weight: bold; cursor: pointer; }
     .edited-tag { font-size: 0.65rem; color: var(--text-light); font-style: italic; margin-left: 0.3rem; }
 
@@ -145,10 +141,7 @@
     .message.received:hover .reply-msg-btn { display: flex; }
     .message.received.admin-view:hover .delete-msg-btn { display: flex; }
 
-    .edit-input {
-      width: 100%; padding: 0.3rem; border: 1px solid var(--btn-primary);
-      border-radius: 8px; font-size: 0.9rem; background: white; color: black;
-    }
+    .edit-input { width: 100%; padding: 0.3rem; border: 1px solid var(--btn-primary); border-radius: 8px; font-size: 0.9rem; background: white; color: black; }
 
     .mention-dropdown {
       position: absolute; bottom: 100%; left: 0; right: 0;
@@ -157,9 +150,7 @@
       display: none; z-index: 20;
     }
     .mention-dropdown.active { display: block; }
-    .mention-item {
-      padding: 0.5rem 1rem; cursor: pointer; border-bottom: 1px solid var(--border);
-    }
+    .mention-item { padding: 0.5rem 1rem; cursor: pointer; border-bottom: 1px solid var(--border); }
     .mention-item:hover { background: var(--hover); }
 
     .quote-preview {
@@ -167,31 +158,11 @@
       border-top: 1px solid var(--border); display: none; align-items: center; gap: 0.5rem;
     }
     .quote-preview.active { display: flex; }
-    .quote-preview .quoted-text {
-      flex: 1; font-size: 0.85rem; color: var(--text-light);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .quote-preview .cancel-quote {
-      background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 1.2rem;
-    }
+    .quote-preview .quoted-text { flex: 1; font-size: 0.85rem; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .quote-preview .cancel-quote { background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 1.2rem; }
 
-    /* Estilos de minijuegos (unificados con la app) */
-    .game-msg { 
-      background: rgba(18,140,126,0.1) !important; 
-      border: 2px solid var(--btn-primary); 
-      text-align: center; 
-      color: var(--text-dark);
-    }
-    .btn-accept-game {
-      background: var(--btn-primary); 
-      color: white; 
-      border: none;
-      padding: 0.5rem 1rem; 
-      border-radius: 20px; 
-      cursor: pointer;
-      font-weight: bold; 
-      margin-top: 0.5rem;
-    }
+    .game-msg { background: rgba(18,140,126,0.1) !important; border: 2px solid var(--btn-primary); text-align: center; color: var(--text-dark); }
+    .btn-accept-game { background: var(--btn-primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 20px; cursor: pointer; font-weight: bold; margin-top: 0.5rem; }
     .game-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.85); z-index: 500;
@@ -200,33 +171,19 @@
     }
     .game-overlay.active { display: flex; }
     .game-options { display: flex; gap: 2rem; margin: 2rem 0; }
-    .game-option {
-      font-size: 4rem; background: rgba(255,255,255,0.2); border: 3px solid white;
-      border-radius: 20px; padding: 1rem; cursor: pointer; transition: transform 0.2s;
-    }
+    .game-option { font-size: 4rem; background: rgba(255,255,255,0.2); border: 3px solid white; border-radius: 20px; padding: 1rem; cursor: pointer; transition: transform 0.2s; }
     .game-option:hover { transform: scale(1.1); background: rgba(255,255,255,0.4); }
     .game-option.selected { border-color: #27ae60; background: rgba(39,174,96,0.4); }
-    .btn-confirm {
-      padding: 1rem 2rem; font-size: 1.5rem; background: #128c7e; color: white;
-      border: none; border-radius: 50px; cursor: pointer; margin-top: 1rem;
-    }
+    .btn-confirm { padding: 1rem 2rem; font-size: 1.5rem; background: #128c7e; color: white; border: none; border-radius: 50px; cursor: pointer; margin-top: 1rem; }
     .btn-confirm:disabled { background: #555; }
 
     .hangman-word { font-size: 2rem; letter-spacing: 0.5rem; margin: 1rem 0; }
     .hangman-letters { margin: 1rem 0; font-size: 1rem; }
     .hangman-input { display: flex; gap: 0.5rem; margin-top: 0.5rem; align-items: center; }
-    .hangman-input input {
-      padding: 0.5rem; border-radius: 8px; border: none; font-size: 1.2rem; width: 3rem; text-align: center;
-    }
-    .hangman-word-input {
-      display: flex; gap: 0.5rem; margin-top: 0.5rem; align-items: center;
-    }
-    .hangman-word-input input {
-      padding: 0.5rem; border-radius: 8px; border: none; font-size: 1rem; flex: 1; min-width: 150px;
-    }
-    .hangman-drawing {
-      font-family: monospace; white-space: pre; font-size: 1.1rem; line-height: 1.2;
-    }
+    .hangman-input input { padding: 0.5rem; border-radius: 8px; border: none; font-size: 1.2rem; width: 3rem; text-align: center; }
+    .hangman-word-input { display: flex; gap: 0.5rem; margin-top: 0.5rem; align-items: center; }
+    .hangman-word-input input { padding: 0.5rem; border-radius: 8px; border: none; font-size: 1rem; flex: 1; min-width: 150px; }
+    .hangman-drawing { font-family: monospace; white-space: pre; font-size: 1.1rem; line-height: 1.2; }
 
     .emoji-picker { background: var(--panel-bg); border-top: 1px solid var(--border); height: 250px; display: none; flex-direction: column; flex-shrink: 0; }
     .emoji-picker.open { display: flex; }
@@ -247,26 +204,42 @@
 
     .dark-toggle { background: none; border: none; color: var(--header-text); font-size: 1.2rem; cursor: pointer; margin-left: 0.5rem; }
 
-    /* Modal de videollamada */
-    .call-modal {
-      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.95); z-index: 600; flex-direction: column;
+    /* Llamadas */
+    .call-bubble {
+      position: fixed; bottom: 5rem; right: 1rem; background: var(--header-bg);
+      color: white; border-radius: 50px; padding: 0.8rem 1.5rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4); cursor: pointer; z-index: 400;
+      display: none; align-items: center; gap: 0.8rem; font-weight: bold;
     }
-    .call-modal.active { display: flex; }
-    .call-modal-header {
-      display: flex; justify-content: flex-end; padding: 0.5rem;
+    .call-bubble.active { display: flex; }
+    .call-panel {
+      position: fixed; bottom: 5rem; right: 1rem; background: var(--panel-bg);
+      border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      z-index: 401; width: 300px; display: none; flex-direction: column;
     }
-    .call-modal-header button {
+    .call-panel.active { display: flex; }
+    .call-panel-header {
+      background: var(--header-bg); color: var(--header-text);
+      padding: 1rem; border-radius: 20px 20px 0 0; display: flex; justify-content: space-between;
+    }
+    .call-participants { padding: 0.5rem; max-height: 200px; overflow-y: auto; }
+    .call-participant {
+      display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .call-participant .name { flex: 1; font-size: 0.9rem; }
+    .call-participant .volume-slider { width: 80px; }
+    .call-participant .btn-mute { background: none; border: none; cursor: pointer; color: var(--text-light); }
+    .call-panel-footer { padding: 0.5rem; text-align: center; }
+    .call-panel-footer button {
       background: #dc3545; color: white; border: none; padding: 0.5rem 1rem;
-      border-radius: 20px; font-size: 1rem; cursor: pointer;
-    }
-    .call-modal iframe {
-      flex: 1; width: 100%; border: none;
+      border-radius: 20px; cursor: pointer; font-size: 1rem;
     }
 
     @media (max-width: 600px) {
       .side-menu { width: 85%; }
       .message { max-width: 85%; }
+      .call-panel { width: 280px; }
     }
   </style>
 </head>
@@ -322,7 +295,6 @@
       <div id="emoji-grid" class="emoji-grid"></div>
     </div>
 
-    <!-- Cita preview -->
     <div id="quote-preview" class="quote-preview">
       <i class="fas fa-reply" style="color:var(--text-light);"></i>
       <span class="quoted-text" id="quoted-text-preview"></span>
@@ -373,12 +345,19 @@
     <p style="margin-top:0.5rem;" id="hangman-status"></p>
   </div>
 
-  <!-- Modal de videollamada -->
-  <div id="call-modal" class="call-modal">
-    <div class="call-modal-header">
-      <button onclick="endCall()"><i class="fas fa-phone-slash"></i> Colgar</button>
+  <!-- UI Llamada -->
+  <div id="call-bubble" class="call-bubble" onclick="toggleCallPanel()">
+    <i class="fas fa-phone"></i> <span id="call-bubble-text">Llamada activa</span>
+  </div>
+  <div id="call-panel" class="call-panel">
+    <div class="call-panel-header">
+      <span>🎙️ Llamada</span>
+      <button style="background:none;border:none;color:white;cursor:pointer;" onclick="toggleCallPanel()"><i class="fas fa-times"></i></button>
     </div>
-    <iframe id="jitsi-iframe" allow="camera; microphone; fullscreen; speaker; display-capture"></iframe>
+    <div id="call-participants" class="call-participants"></div>
+    <div class="call-panel-footer">
+      <button id="hangup-btn" onclick="hangUp()"><i class="fas fa-phone-slash"></i> Colgar</button>
+    </div>
   </div>
 
   <!-- Modal crear/unirse -->
@@ -422,6 +401,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // Variables globales
     let currentUser = { name: '' };
     let currentRoom = '';
     let unsubscribeMessages = null, unsubscribeRoom = null;
@@ -432,6 +412,16 @@
     let quotedMessage = null;
     let roomParticipants = [];
     let currentHangmanId = null, unsubscribeHangman = null;
+
+    // Llamadas
+    const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+    let localStream = null;
+    let peerConnections = {};
+    let callDocRef = null;
+    let callUnsubscribe = null;
+    let isInCall = false;
+    let callId = null;
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
     const emojiCategories = {
       "😀": ["😀","😃","😄","😁","😅","😂","🤣","😊","😇","🙂","😉","😌","😍","🥰","😘"],
@@ -563,6 +553,7 @@
     window.goBackToChats = () => {
       if (currentGameId) abandonGame();
       if (currentHangmanId) closeHangman();
+      if (isInCall) hangUp();
       if (unsubscribeMessages) { unsubscribeMessages(); unsubscribeMessages = null; }
       if (unsubscribeRoom) { unsubscribeRoom(); unsubscribeRoom = null; }
       document.getElementById('chat-screen').classList.remove('active');
@@ -577,6 +568,7 @@
       if (!currentRoom) return;
       if (currentGameId) abandonGame();
       if (currentHangmanId) closeHangman();
+      if (isInCall) hangUp();
       const ref = doc(db, 'rooms', currentRoom);
       const snap = await getDoc(ref);
       if (snap.exists()) {
@@ -767,7 +759,7 @@
       });
     }
 
-    // Piedra Papel Tijera
+    // ========== PIEDRA PAPEL TIJERA ==========
     window.sendGameChallenge = async () => {
       if (!currentRoom) return;
       await addDoc(collection(db, 'rooms', currentRoom, 'messages'), {
@@ -837,7 +829,7 @@
       currentGameId = null; selectedMove = null;
     };
 
-    // Ahorcado
+    // ========== AHORCADO ==========
     window.sendHangmanChallenge = async () => {
       if (!currentRoom) return;
       const word = prompt('Ingresa la palabra secreta (mínimo 3 letras):');
@@ -1033,25 +1025,161 @@
       document.getElementById('hangman-overlay').classList.remove('active');
     };
 
-    // ========== VIDEOLAMADA INTEGRADA ==========
-    window.startCall = () => {
+    // ========== LLAMADAS DE VOZ ==========
+    window.startCall = async () => {
       if (!currentRoom) return;
-      const modal = document.getElementById('call-modal');
-      const iframe = document.getElementById('jitsi-iframe');
-      // Jitsi Meet embebido, sin pantalla de pre‑unión
-      const domain = 'meet.jit.si';
-      const roomName = currentRoom; // usa el código de sala como nombre de reunión
-      iframe.src = `https://${domain}/${roomName}#config.prejoinPageEnabled=false&config.startWithAudioMuted=false&config.startWithVideoMuted=false`;
-      modal.classList.add('active');
+      if (isInCall) { alert('Ya estás en una llamada'); return; }
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        callId = Date.now().toString();
+        callDocRef = doc(db, 'rooms', currentRoom, 'calls', callId);
+        await setDoc(callDocRef, { createdBy: currentUser.name, startedAt: serverTimestamp(), participants: [currentUser.name] });
+        isInCall = true;
+        document.getElementById('call-bubble').classList.add('active');
+        document.getElementById('call-bubble-text').textContent = 'Conectando...';
+        setupCallListener();
+      } catch (e) {
+        alert('No se pudo acceder al micrófono. Verifica los permisos.');
+      }
     };
 
-    window.endCall = () => {
-      const modal = document.getElementById('call-modal');
-      const iframe = document.getElementById('jitsi-iframe');
-      iframe.src = ''; // detener la llamada
-      modal.classList.remove('active');
+    function setupCallListener() {
+      callUnsubscribe = onSnapshot(callDocRef, async (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+        if (data.ended) { cleanupCall(); return; }
+        const participants = data.participants || [];
+        updateCallUI(participants);
+        for (const name of participants) {
+          if (name === currentUser.name) continue;
+          if (!peerConnections[name]) {
+            createPeerConnection(name);
+          }
+        }
+        for (const name in peerConnections) {
+          if (!participants.includes(name)) {
+            closePeerConnection(name);
+          }
+        }
+      });
+    }
+
+    function createPeerConnection(remoteName) {
+      const pc = new RTCPeerConnection(rtcConfig);
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = 1.0;
+      peerConnections[remoteName] = { pc, gainNode };
+
+      pc.onicecandidate = (e) => {
+        if (e.candidate) {
+          const candidateRef = doc(collection(callDocRef, 'participants', currentUser.name, 'candidates'), Date.now().toString());
+          setDoc(candidateRef, { candidate: JSON.stringify(e.candidate) });
+        }
+      };
+      pc.ontrack = (e) => {
+        const audio = document.createElement('audio');
+        audio.autoplay = true;
+        audio.srcObject = e.streams[0];
+        const source = audioContext.createMediaStreamSource(e.streams[0]);
+        source.connect(gainNode).connect(audioContext.destination);
+        peerConnections[remoteName].gainNode = gainNode;
+        peerConnections[remoteName].audioEl = audio;
+      };
+      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+      pc.createOffer().then(offer => pc.setLocalDescription(offer)).then(() => {
+        setDoc(doc(callDocRef, 'participants', currentUser.name, 'offer'), { sdp: JSON.stringify(pc.localDescription) });
+      });
+
+      const offerListener = onSnapshot(doc(callDocRef, 'participants', remoteName, 'offer'), async (snap) => {
+        if (!snap.exists() || pc.signalingState !== 'stable') return;
+        const data = snap.data();
+        await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(data.sdp)));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        setDoc(doc(callDocRef, 'participants', currentUser.name, 'answer'), { sdp: JSON.stringify(answer) });
+      });
+
+      const answerListener = onSnapshot(doc(callDocRef, 'participants', remoteName, 'answer'), async (snap) => {
+        if (!snap.exists() || pc.signalingState !== 'have-local-offer') return;
+        const data = snap.data();
+        await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(data.sdp)));
+      });
+
+      const candidatesListener = onSnapshot(collection(callDocRef, 'participants', remoteName, 'candidates'), (snap) => {
+        snap.docChanges().forEach(async change => {
+          if (change.type === 'added') {
+            const cand = JSON.parse(change.doc.data().candidate);
+            if (pc.remoteDescription) await pc.addIceCandidate(new RTCIceCandidate(cand));
+          }
+        });
+      });
+
+      peerConnections[remoteName].listeners = { offerListener, answerListener, candidatesListener };
+    }
+
+    function closePeerConnection(name) {
+      const conn = peerConnections[name];
+      if (!conn) return;
+      conn.pc.close();
+      if (conn.listeners) {
+        conn.listeners.offerListener();
+        conn.listeners.answerListener();
+        conn.listeners.candidatesListener();
+      }
+      delete peerConnections[name];
+    }
+
+    function cleanupCall() {
+      isInCall = false;
+      document.getElementById('call-bubble').classList.remove('active');
+      document.getElementById('call-panel').classList.remove('active');
+      if (localStream) localStream.getTracks().forEach(t => t.stop());
+      localStream = null;
+      for (const name in peerConnections) closePeerConnection(name);
+      if (callUnsubscribe) { callUnsubscribe(); callUnsubscribe = null; }
+      callDocRef = null;
+      callId = null;
+    }
+
+    window.hangUp = async () => {
+      if (!callDocRef) return;
+      await updateDoc(callDocRef, { ended: true });
+      cleanupCall();
     };
-    // ==========================================
+
+    function updateCallUI(participants) {
+      document.getElementById('call-bubble-text').textContent = `${participants.length} en llamada`;
+      const panel = document.getElementById('call-participants');
+      panel.innerHTML = participants.map(p => {
+        const isMe = p === currentUser.name;
+        return `<div class="call-participant">
+          <i class="fas fa-user"></i>
+          <span class="name">${p} ${isMe ? '(tú)' : ''}</span>
+          ${!isMe ? `<input type="range" min="0" max="2" step="0.1" value="1" class="volume-slider" oninput="setVolume('${p}', this.value)">` : ''}
+          ${isMe ? `<button class="btn-mute" onclick="toggleMute()"><i class="fas ${localStream && localStream.getAudioTracks()[0].enabled ? 'fa-microphone' : 'fa-microphone-slash'}"></i></button>` : ''}
+        </div>`;
+      }).join('');
+    }
+
+    window.setVolume = (remoteName, value) => {
+      const conn = peerConnections[remoteName];
+      if (conn && conn.gainNode) {
+        conn.gainNode.gain.value = parseFloat(value);
+      }
+    };
+
+    window.toggleMute = () => {
+      if (localStream) {
+        const track = localStream.getAudioTracks()[0];
+        track.enabled = !track.enabled;
+        updateCallUI(roomParticipants);
+      }
+    };
+
+    window.toggleCallPanel = () => {
+      document.getElementById('call-panel').classList.toggle('active');
+    };
 
     // Emojis
     window.toggleEmojiPicker = () => {
