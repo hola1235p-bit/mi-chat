@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>ChatApp - Llamadas WebRTC + No leídos</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- PeerJS -->
+  <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+  <style>
+    /* ========== ESTILOS (igual que antes, se incluyen completos) ========== */
+    :root {
+      --bg: #e5ddd5;
+      --header-bg: #075e54;
+      --header-text: white;
+      --bubble-sent: #dcf8c6;
+      --bubble-rec: white;
+      --text-dark: #111;
+      --text-light: #666;
+      --panel-bg: white;
+      --border: #f0f0f0;
+      --input-bg: #f5f5f5;
+      --input-bar-bg: white;
+      --chats-bg: white;
+      --chat-item-bg: white;
+      --hover: #f5f5f5;
+      --fab: #128c7e;
+      --btn-primary: #128c7e;
+      --mention: #1a73e8;
+    }
+    body.dark {
+      --bg: #111b21;
+      --header-bg: #202c33;
+      --bubble-sent: #005c4b;
+      --bubble-rec: #202c33;
+      --text-dark: #e1e1e1;
+      --text-light: #8696a0;
+      --panel-bg: #111b21;
+      --border: #222d34;
+      --input-bg: #2a3942;
+      --input-bar-bg: #202c33;
+      --chats-bg: #111b21;
+      --chat-item-bg: #111b21;
+      --hover: #1f2c33;
+      --fab: #005c4b;
+      --btn-primary: #008069;
+      --mention: #4da3ff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; overflow: hidden; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      height: 100dvh;
+      height: -webkit-fill-available;
+      color: var(--text-dark);
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .screen { display: none; height: 100%; flex-direction: column; }
+    .screen.active { display: flex; }
+
+    #login-screen { justify-content: center; align-items: center; background: linear-gradient(135deg, #075e54, #128c7e); }
+    .login-container {
+      background: var(--panel-bg); padding: 2rem; border-radius: 15px;
+      width: 90%; max-width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center; color: var(--text-dark);
+    }
+    .login-container h2 { color: var(--btn-primary); margin-bottom: 1rem; }
+    .input-group { margin: 0.8rem 0; }
+    .input-group input {
+      width: 100%; padding: 0.8rem; border: 2px solid var(--border);
+      border-radius: 10px; font-size: 1rem; outline: none; background: var(--input-bg); color: var(--text-dark);
+    }
+    .btn { width: 100%; padding: 0.8rem; border: none; border-radius: 10px; font-size: 1rem; cursor: pointer; margin-top: 0.5rem; font-weight: bold; }
+    .btn-primary { background: var(--btn-primary); color: white; }
+    .btn-danger { background: #dc3545; color: white; }
+
+    #chats-screen { background: var(--chats-bg); }
+    .chats-header { background: var(--header-bg); color: var(--header-text); padding: 1rem; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .chats-header h2 { font-size: 1.3rem; }
+    .chats-list { flex: 1; overflow-y: auto; }
+    .chat-item {
+      padding: 1rem; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; gap: 1rem;
+      background: var(--chat-item-bg); color: var(--text-dark); transition: background 0.2s;
+    }
+    .chat-item:hover { background: var(--hover); }
+    .chat-item i { font-size: 1.8rem; color: var(--btn-primary); }
+    .chat-item .name { font-weight: bold; flex: 1; }
+    .chat-item .code { font-size: 0.8rem; color: var(--text-light); }
+    .unread-badge {
+      background: #25d366; color: white; border-radius: 50%; min-width: 20px;
+      height: 20px; font-size: 0.7rem; display: flex; align-items: center;
+      justify-content: center; margin-left: auto; padding: 0 4px; font-weight: bold;
+    }
+    .fab {
+      position: fixed; bottom: 2rem; right: 2rem; background: var(--fab); color: white;
+      width: 56px; height: 56px; border-radius: 50%; border: none; font-size: 1.5rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 10;
+    }
+
+    .chat-header { background: var(--header-bg); color: var(--header-text); padding: 0.8rem 1rem; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .header-left { display: flex; align-items: center; gap: 0.5rem; }
+    .header-right { display: flex; gap: 0.5rem; }
+    .back-btn, .menu-btn, .fullscreen-btn, .call-btn { background: none; border: none; color: white; font-size: 1.3rem; cursor: pointer; padding: 0.5rem; }
+
+    .side-menu {
+      position: fixed; top: 0; right: -320px; width: 300px; height: 100%; background: var(--panel-bg); z-index: 200;
+      transition: right 0.3s; box-shadow: -2px 0 20px rgba(0,0,0,0.2); overflow-y: auto; display: flex; flex-direction: column;
+    }
+    .side-menu.open { right: 0; }
+    .menu-header { background: var(--header-bg); color: var(--header-text); padding: 1rem; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .close-menu { background: none; border: none; color: white; font-size: 1.3rem; cursor: pointer; }
+    .menu-section { padding: 1.2rem; border-bottom: 1px solid var(--border); }
+    .menu-section h4 { color: var(--text-dark); margin-bottom: 0.8rem; }
+    .code-display {
+      background: var(--input-bg); padding: 0.8rem; border-radius: 10px;
+      display: flex; justify-content: space-between; align-items: center; font-size: 1.3rem; font-weight: bold; letter-spacing: 2px;
+    }
+    .btn-copy { background: var(--btn-primary); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 8px; cursor: pointer; }
+    .users-list { list-style: none; }
+    .users-list li { padding: 0.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
+
+    .messages-container { flex: 1; overflow-y: auto; padding: 1rem; background: var(--bg); -webkit-overflow-scrolling: touch; }
+    .message { margin: 0.5rem 0; max-width: 75%; position: relative; }
+    .message-content { padding: 0.5rem 0.7rem; border-radius: 12px; position: relative; word-wrap: break-word; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .message.sent .message-content { background: var(--bubble-sent); }
+    .message.received .message-content { background: var(--bubble-rec); }
+    .message-username { font-size: 0.75rem; color: var(--btn-primary); font-weight: bold; margin-bottom: 0.2rem; }
+    .message-time { font-size: 0.65rem; color: var(--text-light); margin-top: 0.2rem; display: inline-block; }
+    .message-img { max-width: 250px; border-radius: 10px; cursor: pointer; display: block; }
+    .message-audio { max-width: 250px; margin-top: 0.3rem; }
+    .sticker-msg { font-size: 3.5rem; padding: 0.3rem !important; text-align: center; }
+    .system-msg { text-align: center; font-size: 0.8rem; color: var(--text-light); margin: 0.8rem 0; }
+    .typing-indicator { font-size: 0.8rem; color: var(--text-light); padding: 0.3rem 0.8rem; font-style: italic; min-height: 20px; }
+    .message-date {
+      text-align: center; font-size: 0.7rem; color: var(--text-light); margin: 0.5rem 0;
+      padding: 0.3rem 0; border-top: 1px solid var(--border);
+    }
+    .mention-highlight {
+      background: rgba(26,115,232,0.15); font-weight: bold; border-radius: 4px; padding: 0 2px;
+    }
+
+    .quoted-msg { background: rgba(0,0,0,0.05); border-left: 4px solid var(--btn-primary); padding: 0.3rem 0.5rem; border-radius: 8px; margin-bottom: 0.4rem; font-size: 0.85rem; cursor: pointer; }
+    .mention { color: var(--mention); font-weight: bold; cursor: pointer; }
+    .edited-tag { font-size: 0.65rem; color: var(--text-light); font-style: italic; margin-left: 0.3rem; }
+
+    .delete-msg-btn, .edit-msg-btn, .reply-msg-btn {
+      position: absolute; top: 5px; background: rgba(255,255,255,0.9); border: none; border-radius: 50%;
+      width: 22px; height: 22px; font-size: 0.8rem; cursor: pointer; display: none; align-items: center; justify-content: center;
+    }
+    .delete-msg-btn { right: 5px; color: #e74c3c; }
+    .edit-msg-btn { right: 30px; color: #555; }
+    .reply-msg-btn { right: 55px; color: #128c7e; }
+    .message.sent:hover .delete-msg-btn, .message.sent:hover .edit-msg-btn, .message.sent:hover .reply-msg-btn,
+    .message.received:hover .reply-msg-btn { display: flex; }
+    .message.received.admin-view:hover .delete-msg-btn { display: flex; }
+
+    .edit-input { width: 100%; padding: 0.3rem; border: 1px solid var(--btn-primary); border-radius: 8px; font-size: 0.9rem; background: white; color: black; }
+
+    .mention-dropdown {
+      position: absolute; bottom: 100%; left: 0; right: 0;
+      background: var(--panel-bg); border: 1px solid var(--border);
+      border-radius: 10px 10px 0 0; max-height: 150px; overflow-y: auto;
+      display: none; z-index: 20;
+    }
+    .mention-dropdown.active { display: block; }
+    .mention-item { padding: 0.5rem 1rem; cursor: pointer; border-bottom: 1px solid var(--border); }
+    .mention-item:hover { background: var(--hover); }
+
+    .quote-preview {
+      background: var(--input-bar-bg); padding: 0.5rem 1rem;
+      border-top: 1px solid var(--border); display: none; align-items: center; gap: 0.5rem;
+    }
+    .quote-preview.active { display: flex; }
+    .quote-preview .quoted-text { flex: 1; font-size: 0.85rem; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .quote-preview .cancel-quote { background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 1.2rem; }
+
+    .game-msg { background: rgba(18,140,126,0.1) !important; border: 2px solid var(--btn-primary); text-align: center; color: var(--text-dark); }
+    .btn-accept-game { background: var(--btn-primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 20px; cursor: pointer; font-weight: bold; margin-top: 0.5rem; }
+    .game-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85); z-index: 500;
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      color: white; font-size: 1.2rem;
+    }
+    .game-overlay.active { display: flex; }
+    .game-options { display: flex; gap: 2rem; margin: 2rem 0; }
+    .game-option { font-size: 4rem; background: rgba(255,255,255,0.2); border: 3px solid white; border-radius: 20px; padding: 1rem; cursor: pointer; transition: transform 0.2s; }
+    .game-option:hover { transform: scale(1.1); background: rgba(255,255,255,0.4); }
+    .game-option.selected { border-color: #27ae60; background: rgba(39,174,96,0.4); }
+    .btn-confirm { padding: 1rem 2rem; font-size: 1.5rem; background: #128c7e; color: white; border: none; border-radius: 50px; cursor: pointer; margin-top: 1rem; }
+    .btn-confirm:disabled { background: #555; }
+
+    .hangman-word { font-size: 2rem; letter-spacing: 0.5rem; margin: 1rem 0; }
+    .hangman-letters { margin: 1rem 0; font-size: 1rem; }
+    .hangman-input { display: flex; gap: 0.5rem; margin-top: 0.5rem; align-items: center; }
+    .hangman-input input { padding: 0.5rem; border-radius: 8px; border: none; font-size: 1.2rem; width: 3rem; text-align: center; }
+    .hangman-word-input { display: flex; gap: 0.5rem; margin-top: 0.5rem; align-items: center; }
+    .hangman-word-input input { padding: 0.5rem; border-radius: 8px; border: none; font-size: 1rem; flex: 1; min-width: 150px; }
+    .hangman-drawing { font-family: monospace; white-space: pre; font-size: 1.1rem; line-height: 1.2; }
+
+    .emoji-picker { background: var(--panel-bg); border-top: 1px solid var(--border); height: 250px; display: none; flex-direction: column; flex-shrink: 0; }
+    .emoji-picker.open { display: flex; }
+    .emoji-tabs { display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; flex-shrink: 0; }
+    .emoji-tab { padding: 0.5rem 0.8rem; border: none; background: none; font-size: 1.2rem; cursor: pointer; opacity: 0.6; color: var(--text-dark); }
+    .emoji-tab.active { opacity: 1; border-bottom: 3px solid var(--btn-primary); }
+    .emoji-grid { flex: 1; overflow-y: auto; display: flex; flex-wrap: wrap; align-content: flex-start; padding: 0.5rem; }
+    .emoji-btn { font-size: 1.5rem; background: none; border: none; cursor: pointer; padding: 0.3rem; border-radius: 8px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+    .emoji-btn:hover { background: var(--hover); }
+
+    .input-bar {
+      display: flex; align-items: center; padding: 0.6rem; background: var(--input-bar-bg); gap: 0.8rem;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05); flex-shrink: 0; z-index: 10; position: relative;
+    }
+    #message-input { flex: 1; padding: 0.7rem 1rem; border: none; border-radius: 25px; background: var(--input-bg); font-size: 0.95rem; outline: none; color: var(--text-dark); }
+    .input-action-btn { background: none; border: none; font-size: 1.4rem; color: var(--text-light); cursor: pointer; padding: 0.4rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .send-btn { background: var(--btn-primary); color: white; border: none; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; }
+
+    .dark-toggle { background: none; border: none; color: var(--header-text); font-size: 1.2rem; cursor: pointer; margin-left: 0.5rem; }
+
+    /* Llamadas */
+    .call-bubble {
+      position: fixed; bottom: 5rem; right: 1rem; background: var(--header-bg);
+      color: white; border-radius: 50px; padding: 0.8rem 1.5rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4); cursor: pointer; z-index: 400;
+      display: none; align-items: center; gap: 0.8rem; font-weight: bold;
+    }
+    .call-bubble.active { display: flex; }
+    .call-panel {
+      position: fixed; bottom: 5rem; right: 1rem; background: var(--panel-bg);
+      border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      z-index: 401; width: 300px; display: none; flex-direction: column;
+    }
+    .call-panel.active { display: flex; }
+    .call-panel-header {
+      background: var(--header-bg); color: var(--header-text);
+      padding: 1rem; border-radius: 20px 20px 0 0; display: flex; justify-content: space-between;
+    }
+    .call-participants { padding: 0.5rem; max-height: 200px; overflow-y: auto; }
+    .call-participant {
+      display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .call-participant .name { flex: 1; font-size: 0.9rem; }
+    .call-participant .volume-slider { width: 80px; }
+    .call-participant .btn-mute { background: none; border: none; cursor: pointer; color: var(--text-light); }
+    .call-panel-footer { padding: 0.5rem; text-align: center; }
+    .call-panel-footer button {
+      background: #dc3545; color: white; border: none; padding: 0.5rem 1rem;
+      border-radius: 20px; cursor: pointer; font-size: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      .side-menu { width: 85%; }
+      .message { max-width: 85%; }
+      .call-panel { width: 280px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ========== PANTALLAS (Login, Chats, Chat, Overlays) ========== -->
+  <!-- (Se mantienen exactamente igual que en el último código completo que envié, incluyendo los overlays de juegos y el modal de llamada) -->
+  <!-- ... (copiar aquí toda la estructura HTML de la respuesta anterior, sin cambios) ... -->
+
+  <!-- UI Llamada (burbuja y panel) -->
+  <div id="call-bubble" class="call-bubble" onclick="toggleCallPanel()">
+    <i class="fas fa-phone"></i> <span id="call-bubble-text">Llamada activa</span>
+  </div>
+  <div id="call-panel" class="call-panel">
+    <div class="call-panel-header">
+      <span>🎙️ Llamada</span>
+      <button style="background:none;border:none;color:white;cursor:pointer;" onclick="toggleCallPanel()"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="call-participants" class="call-participants"></div>
+    <div class="call-panel-footer">
+      <button id="hangup-btn" onclick="hangUp()"><i class="fas fa-phone-slash"></i> Colgar</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { 
+      getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, setDoc, getDoc, 
+      updateDoc, arrayUnion, arrayRemove, serverTimestamp, deleteDoc, writeBatch, getDocs 
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBcO-w2lVh0Iu9PylKi0Byu1Q4tqH_Sq8o",
+      authDomain: "mi-chat-app-a607e.firebaseapp.com",
+      databaseURL: "https://mi-chat-app-a607e-default-rtdb.firebaseio.com",
+      projectId: "mi-chat-app-a607e",
+      storageBucket: "mi-chat-app-a607e.firebasestorage.app",
+      messagingSenderId: "1012624298846",
+      appId: "1:1012624298846:web:f896a7025b9135bc9135cf"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Variables globales (chat, juegos, etc.)
+    let currentUser = { name: '' };
+    let currentRoom = '';
+    let unsubscribeMessages = null, unsubscribeRoom = null;
+    let typingTimeout = null;
+    let mediaRecorder = null, audioChunks = [];
+    let roomAdminUid = null;
+    let currentGameId = null, unsubscribeGame = null, selectedMove = null;
+    let quotedMessage = null;
+    let roomParticipants = [];
+    let currentHangmanId = null, unsubscribeHangman = null;
+    let unreadCounts = {};
+
+    // Llamadas con PeerJS
+    let peer = null;
+    let localStream = null;
+    let activeCalls = {}; // { peerId: { call, gainNode, audioEl } }
+    let callStartTime = null;
+    let callTimerInterval = null;
+    let currentCallGroupId = null; // ID único de la llamada grupal
+    let amInitiator = false;
+
+    const emojiCategories = { /* ... igual que antes ... */ };
+
+    // Auth y funciones de chat (login, loadChatsList, etc.) sin cambios.
+    // ... (incluir aquí todas las funciones de chat, juegos, emojis, etc. de la respuesta anterior)
+
+    // ========== NUEVO SISTEMA DE LLAMADAS CON PEERJS ==========
+    async function initPeer() {
+      if (peer) return peer;
+      return new Promise((resolve) => {
+        peer = new Peer(currentUser.name + '_' + currentRoom, {
+          host: '0.peerjs.com',
+          port: 443,
+          secure: true,
+          config: {
+            iceServers: [
+              { urls: 'stun:stun.l.google.com:19302' },
+              { urls: 'turn:eu-0.turn.peerjs.com:3478', username: 'peerjs', credential: 'peerjspass' }
+            ]
+          }
+        });
+        peer.on('open', (id) => {
+          console.log('PeerJS listo, ID:', id);
+          resolve(peer);
+        });
+        peer.on('call', (call) => {
+          // Recibir llamada entrante
+          answerCall(call);
+        });
+        peer.on('error', (err) => {
+          console.error('PeerJS error:', err);
+          alert('Error en la conexión de llamada. Intenta de nuevo.');
+        });
+      });
+    }
+
+    window.startCall = async () => {
+      if (!currentRoom) return;
+      if (Object.keys(activeCalls).length > 0) return alert('Ya estás en una llamada');
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        await initPeer();
+        // Enviar mensaje de invitación con nuestro ID de PeerJS
+        const myPeerId = peer.id;
+        currentCallGroupId = Date.now().toString();
+        amInitiator = true;
+        await addDoc(collection(db, 'rooms', currentRoom, 'messages'), {
+          type: 'call',
+          text: `${currentUser.name} ha iniciado una llamada 📞`,
+          callGroupId: currentCallGroupId,
+          peerId: myPeerId,
+          status: 'ringing',
+          userId: currentUser.name,
+          username: currentUser.name,
+          timestamp: serverTimestamp()
+        });
+        // Iniciar UI
+        document.getElementById('call-bubble').classList.add('active');
+        document.getElementById('call-bubble-text').textContent = '0:00';
+        startCallTimer();
+        updateCallPanel();
+      } catch (e) {
+        alert('No se pudo acceder al micrófono');
+      }
+    };
+
+    window.joinCall = async (peerId, callGroupId) => {
+      if (Object.keys(activeCalls).length > 0) return alert('Ya estás en una llamada');
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        await initPeer();
+        currentCallGroupId = callGroupId;
+        amInitiator = false;
+        // Llamar al iniciador
+        const call = peer.call(peerId, localStream);
+        handleCall(call, peerId);
+        document.getElementById('call-bubble').classList.add('active');
+        document.getElementById('call-bubble-text').textContent = '0:00';
+        startCallTimer();
+        updateCallPanel();
+      } catch (e) {
+        alert('No se pudo acceder al micrófono');
+      }
+    };
+
+    function answerCall(call) {
+      if (Object.keys(activeCalls).length >= 5) {
+        call.close();
+        return;
+      }
+      call.answer(localStream);
+      handleCall(call, call.peer);
+      if (!callStartTime) {
+        document.getElementById('call-bubble').classList.add('active');
+        startCallTimer();
+      }
+      updateCallPanel();
+    }
+
+    function handleCall(call, remotePeerId) {
+      const gainNode = new GainNode(audioContext);
+      gainNode.gain.value = 1.0;
+      call.on('stream', (remoteStream) => {
+        const audio = document.createElement('audio');
+        audio.autoplay = true;
+        audio.srcObject = remoteStream;
+        const source = audioContext.createMediaStreamSource(remoteStream);
+        source.connect(gainNode).connect(audioContext.destination);
+        activeCalls[remotePeerId] = { call, gainNode, audioEl: audio };
+        updateCallPanel();
+      });
+      call.on('close', () => {
+        delete activeCalls[remotePeerId];
+        updateCallPanel();
+        if (Object.keys(activeCalls).length === 0) {
+          hangUp();
+        }
+      });
+      call.on('error', (err) => {
+        console.error('Error en llamada:', err);
+        delete activeCalls[remotePeerId];
+        updateCallPanel();
+      });
+    }
+
+    function startCallTimer() {
+      callStartTime = Date.now();
+      if (callTimerInterval) clearInterval(callTimerInterval);
+      callTimerInterval = setInterval(() => {
+        if (Object.keys(activeCalls).length === 0 && !amInitiator) {
+          // Si no hay conexiones y no somos iniciador, colgamos automáticamente
+          hangUp();
+          return;
+        }
+        const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+        const h = Math.floor(elapsed / 3600);
+        const m = Math.floor((elapsed % 3600) / 60);
+        const s = elapsed % 60;
+        document.getElementById('call-bubble-text').textContent = 
+          h > 0 ? `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}` :
+          `${m}:${s.toString().padStart(2,'0')}`;
+      }, 1000);
+    }
+
+    window.hangUp = async () => {
+      if (callTimerInterval) clearInterval(callTimerInterval);
+      // Cerrar todas las conexiones
+      for (const id in activeCalls) {
+        activeCalls[id].call.close();
+      }
+      activeCalls = {};
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+      }
+      document.getElementById('call-bubble').classList.remove('active');
+      document.getElementById('call-panel').classList.remove('active');
+      // Enviar mensaje de duración
+      if (callStartTime) {
+        const duration = Math.floor((Date.now() - callStartTime) / 1000);
+        const h = Math.floor(duration / 3600);
+        const m = Math.floor((duration % 3600) / 60);
+        const s = duration % 60;
+        let durationText = '';
+        if (h > 0) durationText += `${h}h `;
+        if (m > 0) durationText += `${m}m `;
+        durationText += `${s}s`;
+        await addDoc(collection(db, 'rooms', currentRoom, 'messages'), {
+          type: 'system',
+          text: `📞 Llamada finalizada. Duración: ${durationText}`,
+          timestamp: serverTimestamp()
+        });
+      }
+      callStartTime = null;
+      currentCallGroupId = null;
+      amInitiator = false;
+      if (peer) {
+        peer.destroy();
+        peer = null;
+      }
+    };
+
+    function updateCallPanel() {
+      const participants = Object.keys(activeCalls);
+      participants.unshift(currentUser.name); // Agregarse a uno mismo
+      document.getElementById('call-participants').innerHTML = participants.map(name => {
+        const isMe = name === currentUser.name;
+        const remoteId = name !== currentUser.name ? name : null;
+        return `<div class="call-participant">
+          <i class="fas fa-user"></i>
+          <span class="name">${name} ${isMe ? '(tú)' : ''}</span>
+          ${!isMe ? `<input type="range" min="0" max="2" step="0.1" value="1" class="volume-slider" oninput="setVolume('${remoteId}', this.value)">` : ''}
+          ${isMe ? `<button class="btn-mute" onclick="toggleMute()"><i class="fas ${localStream && localStream.getAudioTracks()[0].enabled ? 'fa-microphone' : 'fa-microphone-slash'}"></i></button>` : ''}
+        </div>`;
+      }).join('');
+    }
+
+    window.setVolume = (remoteId, value) => {
+      const conn = activeCalls[remoteId];
+      if (conn && conn.gainNode) {
+        conn.gainNode.gain.value = parseFloat(value);
+      }
+    };
+
+    window.toggleMute = () => {
+      if (localStream) {
+        const track = localStream.getAudioTracks()[0];
+        track.enabled = !track.enabled;
+        updateCallPanel();
+      }
+    };
+
+    window.toggleCallPanel = () => {
+      document.getElementById('call-panel').classList.toggle('active');
+    };
+
+    // ========== RESTO DEL CÓDIGO (chat, juegos, emojis) ==========
+    // ... (debe incluirse completo como en la última respuesta, sin cambios en las funciones de mensajería, juegos, etc.)
+    // Incluir especialmente las funciones de no leídos que ya están corregidas (incrementUnreadIfNeeded, etc.)
+  </script>
+</body>
+</html>
